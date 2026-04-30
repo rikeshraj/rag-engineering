@@ -1,11 +1,6 @@
 """
 Resume Parser - Entry Point
-
-Usage:
-    python main.py resume.txt
-    python main.py resume.txt --output result.json
-    python main.py resume.txt --format pretty
-    python main.py resume.txt --section skills
+Usage: python main.py resume.txt
 """
 
 import argparse
