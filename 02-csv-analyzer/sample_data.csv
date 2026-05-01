@@ -1,0 +1,31 @@
+employee_id,name,department,job_title,salary,years_experience,location,performance_score,is_remote
+1,Alice Johnson,Engineering,Senior Engineer,120000,8,San Francisco,4.5,true
+2,Bob Smith,Marketing,Marketing Manager,85000,5,New York,3.8,false
+3,Carol White,Engineering,Junior Engineer,72000,2,San Francisco,4.1,true
+4,David Brown,Sales,Sales Executive,95000,6,Chicago,4.2,false
+5,Eve Davis,HR,HR Specialist,65000,3,New York,3.5,false
+6,Frank Miller,Engineering,Staff Engineer,145000,12,San Francisco,4.8,true
+7,Grace Wilson,Marketing,Content Writer,58000,2,Remote,3.9,true
+8,Henry Moore,Sales,Sales Manager,110000,9,Chicago,4.4,false
+9,Iris Taylor,Engineering,Senior Engineer,118000,7,Austin,4.3,true
+10,Jack Anderson,HR,HR Manager,82000,6,New York,4.0,false
+11,Karen Thomas,Engineering,Junior Engineer,68000,1,Austin,3.7,true
+12,Liam Jackson,Marketing,Marketing Director,130000,11,New York,4.6,false
+13,Mia White,Sales,Sales Executive,92000,5,Chicago,4.1,false
+14,Noah Harris,Engineering,Staff Engineer,152000,14,San Francisco,4.9,true
+15,Olivia Martin,HR,HR Specialist,63000,2,Remote,3.6,true
+16,Paul Garcia,Sales,Sales Manager,105000,8,Chicago,4.3,false
+17,Quinn Martinez,Engineering,Senior Engineer,125000,9,Austin,4.5,true
+18,Rachel Robinson,Marketing,Content Writer,55000,1,Remote,3.4,true
+19,Sam Clark,Engineering,Junior Engineer,70000,2,San Francisco,3.8,false
+20,Tina Lewis,Sales,Sales Executive,88000,4,New York,3.9,false
+21,Uma Lee,Engineering,Staff Engineer,148000,13,Austin,4.7,true
+22,Victor Walker,HR,HR Director,98000,10,New York,4.2,false
+23,Wendy Hall,Marketing,Marketing Manager,88000,6,Chicago,4.0,false
+24,Xander Young,Engineering,Senior Engineer,122000,8,San Francisco,4.4,true
+25,Yara King,Sales,Sales Executive,90000,5,Chicago,4.1,false
+26,Zoe Wright,Engineering,Junior Engineer,66000,,Austin,3.6,true
+27,Aaron Scott,Marketing,Content Writer,57000,2,Remote,3.7,true
+28,Bella Green,Sales,Sales Manager,108000,8,New York,4.3,false
+29,Carlos Adams,Engineering,Staff Engineer,150000,13,San Francisco,4.8,true
+30,Diana Baker,HR,HR Specialist,64000,3,Chicago,3.8,false
