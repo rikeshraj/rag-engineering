@@ -40,8 +40,6 @@ csv-analyzer/
 ├── main.py             # CLI entry point
 ├── analyzer.py         # CSVAnalyzer class + ColumnStats dataclasses
 ├── sample_data.csv     # 30-row employee dataset for testing
-├── tests/
-│   └── test_analyzer.py
 └── README.md
 ```
 
