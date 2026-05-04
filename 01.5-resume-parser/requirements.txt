@@ -1,0 +1,8 @@
+# Required for PDF support
+pdfplumber>=0.10.0
+
+# Required for DOCX support
+python-docx>=1.0.0
+
+# Optional: for running tests
+pytest>=7.0
