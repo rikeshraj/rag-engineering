@@ -41,7 +41,6 @@ Each project lives in its own folder with:
 - Its own `README.md` with setup and usage instructions
 - Self-contained code — no cross-project dependencies
 - A `requirements.txt` for dependencies
-- An optional `tests/` folder
 
 Navigate into any project folder and follow its README to run it independently.
 
