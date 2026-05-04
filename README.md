@@ -8,8 +8,9 @@ A progressive series of projects building toward a production-ready RAG (Retriev
 
 | # | Project | Concepts | Status |
 |---|---------|----------|--------|
-| 01 | [Resume Parser](./01-resume-parser) | Python, OOP, Regex, File I/O, JSON, argparse | ✅ Complete |
-| 02 | CSV Analyzer | Python, Classes, File I/O, Data processing | 🔄 In Progress |
+| 01 | [Resume Parser - txt](./01-resume-parser) | Python, OOP, Regex, File I/O, JSON, argparse | ✅ Complete |
+| 01.5 | [Resume Parser - pdf,docx,md,txt](./01.5-resume-parser) | Python, OOP, Regex, File I/O, JSON, argparse | ✅ Complete |
+| 02 | CSV Analyzer | Python, Classes, File I/O, Data processing | ✅ Complete |
 | 03 | Employee Analytics DB | SQL, Joins, Window Functions, Indexes | 🔜 Coming Soon |
 | 04 | Resume Scoring API | FastAPI, REST, Pydantic, Auth, SQLite | 🔜 Coming Soon |
 | 05 | Dockerized Resume API | Docker, Docker Compose, PostgreSQL, Git | 🔜 Coming Soon |
