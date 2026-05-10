@@ -3,11 +3,11 @@
 A progressive series of projects building toward a production-ready RAG (Retrieval-Augmented Generation) system. Each project introduces new concepts and builds on the last — from pure Python scripting all the way to containerized AI-powered APIs.
 
 ---
-
-## Projects
+ 
+## Projects 
 
 | # | Project | Concepts | Status |
-|---|---------|----------|--------|
+|---|---------|----------|--------| 
 | 01 | [Resume Parser - txt](./01-resume-parser) | Python, OOP, Regex, File I/O, JSON, argparse | ✅ Complete |
 | 01.5 | [Resume Parser - pdf,docx,md,txt](./01.5-resume-parser) | Python, OOP, Regex, File I/O, JSON, argparse | ✅ Complete |
 | 02 | [CSV Analyzer](./02-csv-analyzer) | Python, Classes, File I/O, Data processing | ✅ Complete |
