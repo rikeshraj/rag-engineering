@@ -8,13 +8,13 @@ A tool that parses plain-text resumes into structured JSON. Built with pure Pyth
 - Parses sections: summary, skills, experience, education
 - Outputs structured JSON to terminal or file
 - Supports filtering to a single section
-
+ 
 ## Usage
 
-```bash
+```bash 
 # Parse and print full result
 python main.py sample_resume.txt
-
+ 
 # Save output to file
 python main.py sample_resume.txt --output result.json
 
