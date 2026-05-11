@@ -1,8 +1,8 @@
-# CSV Analyzer
+# CSV Analyzer 
 
-A command-line tool that analyzes CSV files and produces summary statistics — built with pure Python stdlib, no external dependencies.
+A command-line tool that analyzes CSV files and produces summary statistics — built with pure Python stdlib, no external dependencies. 
 
-## What it does
+## What it does 
 
 - Detects column types automatically (numeric vs categorical) 
 - Computes stats for numeric columns: mean, median, min, max, std dev 
@@ -11,7 +11,7 @@ A command-line tool that analyzes CSV files and produces summary statistics — 
 - Optional Pearson correlation matrix between numeric columns 
 - Outputs to terminal or saves as JSON 
 
-## Usage
+## Usage 
 
 ```bash
 # Full analysis
@@ -33,7 +33,7 @@ python main.py sample_data.csv --correlations
 python main.py sample_data.csv --top 10
 ```
 
-## Project Structure
+## Project Structure 
 
 ```
 csv-analyzer/
