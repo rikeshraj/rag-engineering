@@ -4,12 +4,12 @@ A command-line tool that analyzes CSV files and produces summary statistics — 
 
 ## What it does
 
-- Detects column types automatically (numeric vs categorical)
-- Computes stats for numeric columns: mean, median, min, max, std dev
-- Computes stats for categorical columns: unique count, top values with frequency bars
-- Reports missing values per column
-- Optional Pearson correlation matrix between numeric columns
-- Outputs to terminal or saves as JSON
+- Detects column types automatically (numeric vs categorical) 
+- Computes stats for numeric columns: mean, median, min, max, std dev 
+- Computes stats for categorical columns: unique count, top values with frequency bars 
+- Reports missing values per column 
+- Optional Pearson correlation matrix between numeric columns 
+- Outputs to terminal or saves as JSON 
 
 ## Usage
 
