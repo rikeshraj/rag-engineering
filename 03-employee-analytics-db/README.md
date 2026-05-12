@@ -6,7 +6,7 @@ A SQLite-based employee analytics system built with pure Python stdlib. Demonstr
 
 - Creates a normalized relational schema (employees, departments, locations, reviews)
 - Seeds 500 realistic employees with performance reviews
-- Runs 11 analytics queries covering every major SQL concept
+- Runs 11 analytics queries covering every major SQL concept 
 - Outputs results as formatted tables or JSON
 
 ## Setup
