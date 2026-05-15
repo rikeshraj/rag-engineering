@@ -2,7 +2,7 @@
 
 A SQLite-based employee analytics system built with pure Python stdlib. Demonstrates real-world SQL patterns including JOINs, GROUP BY, window functions, subqueries, and indexes.
 
-## What it does
+## What it does 
 
 - Creates a normalized relational schema (employees, departments, locations, reviews)
 - Seeds 500 realistic employees with performance reviews
