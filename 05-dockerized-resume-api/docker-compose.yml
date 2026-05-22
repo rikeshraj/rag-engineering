@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+
+  # ------------------------------------------------------------------
+  # API service — our FastAPI app
+  # ------------------------------------------------------------------
+  api:
+    build: .
+    container_name: resume-api
+    ports:
+      - "8000:8000"         # host_port:container_port
+    env_file:
+      - .env                # loads API_KEY and DATABASE_URL from .env
+    depends_on:
+      db:
+        condition: service_healthy   # wait for Postgres to be ready
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Database service — PostgreSQL
+  # ------------------------------------------------------------------
+  db:
+    image: postgres:15-alpine       # alpine = smaller image size
+    container_name: resume-db
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data   # persist DB across restarts
+    ports:
+      - "5432:5432"       # expose for local DB tools (e.g. DBeaver, TablePlus)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+# ------------------------------------------------------------------
+# Named volume — DB data persists even when containers are stopped
+# ------------------------------------------------------------------
+volumes:
+  postgres_data:
