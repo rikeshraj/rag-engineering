@@ -1,277 +1,321 @@
-# Dockerized Resume Scoring API — File-by-File Breakdown
+# Document Chunker — File-by-File Breakdown
 
-A complete explanation of every file in the project, what changed from Project 4, and the key decisions made.
+A complete explanation of every file in the project, what it does, why it was built that way, and the key decisions made.
 
 ---
 
 ## Project Structure
 
 ```
-05-dockerized-resume-api/
-├── main.py            # FastAPI app (PostgreSQL version)
-├── database.py        # psycopg2 connection + schema
-├── scorer.py          # Scoring logic (unchanged from Project 4)
-├── models.py          # Pydantic models (unchanged from Project 4)
-├── auth.py            # API key auth (unchanged from Project 4)
-├── Dockerfile         # Multi-stage Docker image
-├── docker-compose.yml # API + PostgreSQL services
-├── Makefile           # Shortcut commands
+06-document-chunker/
+├── main.py               # CLI entry point
+├── chunker.py            # All chunking strategies + factory
+├── sample_document.txt   # RAG intro text for testing
 ├── requirements.txt
-├── .env.example
 ├── README.md
 └── tests/
-    └── test_api.py
+    └── test_chunker.py
 ```
 
-### What changed from Project 4
+### How the files connect
 
-| File | Status | Change |
-|---|---|---|
-| `database.py` | 🔄 Rewritten | SQLite → PostgreSQL (psycopg2) |
-| `main.py` | 🔄 Updated | `%s` placeholders, `RETURNING *`, cursor context managers |
-| `scorer.py` | ✅ Unchanged | Scoring logic is DB-agnostic |
-| `models.py` | ✅ Unchanged | Pydantic models are DB-agnostic |
-| `auth.py` | ✅ Unchanged | Auth is DB-agnostic |
-| `Dockerfile` | 🆕 New | Multi-stage build, non-root user |
-| `docker-compose.yml` | 🆕 New | API + PostgreSQL services |
-| `Makefile` | 🆕 New | Shortcut commands |
+```
+main.py
+  └── chunker.py    ← all strategies, factory, data structures
+```
+
+`main.py` handles CLI parsing, file reading, and output formatting. `chunker.py` handles all chunking logic. Neither file knows about the other's concerns — you can use `chunker.py` as a library without ever touching `main.py`.
 
 ---
 
-## `Dockerfile`
+## `chunker.py`
 
 ### What it does
-Builds the Docker image for the FastAPI app in two stages — a builder stage that installs dependencies, and a final stage that runs the app.
-
-### Multi-stage build
-
-```dockerfile
-# Stage 1: Builder — install dependencies
-FROM python:3.11-slim AS builder
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Stage 2: Final — copy installed packages, run app
-FROM python:3.11-slim
-COPY --from=builder /usr/local/lib/python3.11/site-packages ...
-COPY . .
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-**Why two stages?**
-The builder stage has pip, build tools, and cached package files — all needed to install packages but not to run them. The final stage copies only the installed packages, not the build tooling. Result: a smaller, cleaner image with less attack surface.
-
-**Layer caching — why `requirements.txt` is copied first**
-```dockerfile
-COPY requirements.txt .   ← copied first
-RUN pip install ...        ← cached until requirements.txt changes
-COPY . .                   ← copied last
-```
-Docker builds in layers. If you change `main.py`, Docker only reruns `COPY . .` — the pip install layer is served from cache. If you copied everything at once, any code change would trigger a full reinstall. Separating requirements from code is the most impactful caching optimization in any Python Dockerfile.
-
-**Non-root user**
-```dockerfile
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-USER appuser
-```
-Running as root inside a container means a compromised process has root privileges — it could escape the container, write to host mounts, or modify system files. Running as an unprivileged `appuser` limits blast radius. This is a Docker security best practice.
-
-**`--host 0.0.0.0`**
-By default, uvicorn binds to `127.0.0.1` (localhost only). Inside a container, localhost is the container itself — not reachable from outside. `0.0.0.0` binds to all interfaces, making the port reachable through the container's network interface.
+The core library. Defines two data structures (`Chunk`, `ChunkResult`), a base class (`BaseChunker`), four chunking strategy classes, and a factory function (`get_chunker`).
 
 ---
 
-## `docker-compose.yml`
-
-### What it does
-Defines two services — `api` (FastAPI) and `db` (PostgreSQL) — and how they connect to each other.
-
-### Service dependency with health checks
-
-```yaml
-api:
-  depends_on:
-    db:
-      condition: service_healthy
-
-db:
-  healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-    interval: 5s
-    retries: 5
-```
-
-**Why `condition: service_healthy` instead of just `depends_on: db`?**
-Without the condition, Docker starts the API as soon as the Postgres container starts — not when Postgres is actually ready to accept connections. Postgres takes 2-3 seconds to initialize after the container starts. Without the health check condition, the API tries to connect immediately and crashes with a connection error.
-
-`pg_isready` is a Postgres utility that returns exit code 0 when the server is accepting connections. Docker runs it every 5 seconds until it succeeds 5 times in a row before marking the service healthy.
-
-### Named volume
-
-```yaml
-volumes:
-  postgres_data:
-```
-
-```yaml
-db:
-  volumes:
-    - postgres_data:/var/lib/postgresql/data
-```
-
-Without this, database data lives inside the container. When you run `docker-compose down`, the container is destroyed and all data is lost. A named volume persists on the host outside the container lifecycle. `docker-compose down` keeps the volume; only `docker-compose down -v` (or `make clean`) removes it.
-
-### `env_file: .env`
-
-```yaml
-api:
-  env_file:
-    - .env
-```
-
-Loads all variables from `.env` into the container's environment. This means `API_KEY`, `DATABASE_URL`, and Postgres credentials are set in one place and shared between both services. No hardcoded credentials in `docker-compose.yml`.
-
----
-
-## `database.py` — SQLite → PostgreSQL
-
-### What changed and why
-
-| SQLite (Project 4) | PostgreSQL (Project 5) | Reason |
-|---|---|---|
-| `sqlite3` stdlib | `psycopg2` library | PostgreSQL requires a driver |
-| `?` placeholders | `%s` placeholders | psycopg2 uses `%s` style |
-| `sqlite3.Row` | `RealDictCursor` | Column-name access |
-| JSON string for arrays | `JSONB` native type | PostgreSQL has native JSON |
-| `AUTOINCREMENT` | `SERIAL` | PostgreSQL sequence syntax |
-| File path | `DATABASE_URL` env var | Network connection, not file |
-
-### `RealDictCursor`
+### `Chunk` dataclass
 
 ```python
-conn = psycopg2.connect(
-    get_database_url(),
-    cursor_factory=RealDictCursor,
+@dataclass
+class Chunk:
+    text: str
+    index: int
+    start_char: int
+    end_char: int
+    source: str = ""
+    metadata: dict = field(default_factory=dict)
+```
+
+**Why track `start_char` and `end_char`?**
+In a production RAG system, chunks need to be traceable back to their exact position in the source document. If a retrieved chunk is used to answer a question, you need to know where it came from — page number, section, byte offset. `start_char` and `end_char` are the foundation for building that metadata.
+
+**`token_estimate` as a `@property`**
+```python
+@property
+def token_estimate(self) -> int:
+    return len(self.text) // 4
+```
+A rough estimate based on the rule of thumb that 1 token ≈ 4 characters for English text. It's a `@property` rather than a stored value because it's always derivable from `text` — there's no point storing something you can compute. If `text` changes, the estimate updates automatically.
+
+**Why not store `char_count` as a field?**
+Same reason — `len(self.text)` is O(1) in Python (string length is stored). Computing it on demand is cheaper than keeping a separate field in sync.
+
+---
+
+### `ChunkResult` dataclass
+
+```python
+@dataclass
+class ChunkResult:
+    chunks: list[Chunk]
+    strategy: str
+    source: str
+    total_chars: int
+    chunk_size: int
+    chunk_overlap: int
+```
+
+**Why a separate result object instead of just returning `list[Chunk]`?**
+A plain list loses context — you'd have no way to know what strategy was used, what the chunk size was, or what file it came from. `ChunkResult` bundles the output with the parameters that produced it. This is important for the evaluation phase (Project 15) where you'll compare different chunking configurations against each other.
+
+**`total_chunks` and `avg_chunk_size` as properties**
+```python
+@property
+def total_chunks(self) -> int:
+    return len(self.chunks)
+
+@property
+def avg_chunk_size(self) -> float:
+    return round(sum(len(c.text) for c in self.chunks) / len(self.chunks), 1)
+```
+Both are derived from `self.chunks`. Properties keep the dataclass as the single source of truth — you can't accidentally have `total_chunks = 5` while `len(chunks) = 6`.
+
+---
+
+### `BaseChunker`
+
+```python
+class BaseChunker:
+    def __init__(self, chunk_size=512, chunk_overlap=50, source=""):
+        if chunk_overlap >= chunk_size:
+            raise ValueError(...)
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+        self.source = source
+
+    def chunk(self, text: str) -> ChunkResult:
+        raise NotImplementedError
+```
+
+**Why an abstract base class?**
+All four strategies share the same constructor parameters and the same `chunk()` interface. Putting shared behavior in a base class means:
+- Adding a new parameter (e.g. `min_chunk_size`) happens once in `BaseChunker`, not in every strategy
+- Code that uses a chunker doesn't need to know which strategy it is — it just calls `.chunk(text)`
+- The factory function (`get_chunker`) can return any strategy and the caller works the same way
+
+**Why validate `chunk_overlap < chunk_size` in `__init__`?**
+Failing fast. If overlap ≥ size, the chunker would either loop forever or produce duplicate chunks. Raising in `__init__` surfaces this as a configuration error immediately, not halfway through chunking a large document.
+
+**`_make_chunks_from_splits()` shared helper**
+```python
+def _make_chunks_from_splits(self, splits: list[str], text: str) -> list[Chunk]:
+```
+Both `RecursiveChunker` and `TokenChunker` produce a list of text strings first, then need to build `Chunk` objects with correct character offsets. This helper is shared to avoid duplicating the offset-tracking logic. It uses `text.find(split, cursor)` to locate each split in the original text.
+
+---
+
+### Strategy 1: `FixedSizeChunker`
+
+```python
+start = 0
+while start < len(text):
+    end = min(start + self.chunk_size, len(text))
+    splits.append(text[start:end])
+    start += self.chunk_size - self.chunk_overlap
+```
+
+**The overlap mechanics:**
+If `chunk_size=100` and `chunk_overlap=20`, the step forward is `100 - 20 = 80` characters. So:
+- Chunk 0: chars 0–100
+- Chunk 1: chars 80–180
+- Chunk 2: chars 160–260
+
+Chars 80–100 appear in both chunk 0 and chunk 1. This is intentional — if a sentence spans a chunk boundary, at least one chunk contains the complete sentence.
+
+**Why `min(start + chunk_size, len(text))`?**
+Prevents the last slice from going past the end of the string. Without it, `text[500:600]` on a 550-character string would silently return a 50-character string — which is fine in Python, but `end_char` would be wrong.
+
+**Limitation:** May split mid-word or mid-sentence. This is acceptable for the fixed strategy — it's a baseline, not a production choice.
+
+---
+
+### Strategy 2: `SentenceChunker`
+
+```python
+SENTENCE_END = re.compile(
+    r"(?<=[.!?])\s+(?=[A-Z])|(?<=[.!?])\s*$",
+    re.MULTILINE
 )
 ```
 
-`RealDictCursor` makes every row accessible by column name: `row["salary"]`. This is the psycopg2 equivalent of sqlite3's `row_factory = sqlite3.Row`. Setting it at connection level means all cursors from this connection use it automatically.
+**How the regex works:**
+- `(?<=[.!?])` — lookbehind: character before this position must be `.`, `!`, or `?`
+- `\s+` — one or more whitespace characters (the space after the period)
+- `(?=[A-Z])` — lookahead: next character must be uppercase (start of new sentence)
+- `|(?<=[.!?])\s*$` — or: end of line after punctuation
 
-### `JSONB` vs JSON string
+The lookbehind and lookahead are zero-width — they assert a condition without consuming characters. So splitting on this pattern gives you complete sentences without losing the punctuation.
 
-In Project 4, skills were stored as `TEXT` containing a JSON string: `'["python", "fastapi"]'`. In Project 5, they're stored as `JSONB` — PostgreSQL's native binary JSON type.
+**Why not use NLTK's sentence tokenizer?**
+NLTK's `sent_tokenize` is more accurate but adds a large dependency. The regex handles the vast majority of real-world English text correctly. For a RAG system processing business documents, the edge cases NLTK handles better (abbreviations like "Dr.", "U.S.") rarely change retrieval quality meaningfully.
 
-Benefits of JSONB:
-- psycopg2 automatically deserializes it to a Python list on read — no `json.loads()` needed
-- It's indexable — you can query `WHERE matched_skills @> '["python"]'`
-- It validates JSON on write — malformed JSON is rejected at the DB level
-
-### Cursor as context manager
-
+**Overlap in sentence chunking:**
+After flushing a chunk, the code works backwards through `current_sentences` to find sentences that fit within `chunk_overlap` characters:
 ```python
-with get_connection() as conn:
-    with conn.cursor() as cur:
-        cur.execute(...)
-        row = cur.fetchone()
-    conn.commit()
+for s in reversed(current_sentences):
+    if overlap_len + len(s) + 1 <= self.chunk_overlap:
+        overlap_sentences.insert(0, s)
 ```
-
-psycopg2 connections and cursors both support the context manager protocol. The cursor is closed automatically on `__exit__`. Note that `conn.commit()` must be called explicitly — psycopg2 defaults to manual commit mode (unlike sqlite3 which auto-commits inside `with` blocks).
+This carries complete sentences as overlap — more semantically meaningful than carrying a fixed number of characters that might start mid-sentence.
 
 ---
 
-## `main.py` — PostgreSQL differences
-
-### `RETURNING *` on INSERT
-
-```sql
-INSERT INTO scores (...) VALUES (%s, %s, ...) RETURNING *
-```
-
-`RETURNING *` tells PostgreSQL to return the newly inserted row immediately. In Project 4 (SQLite), a second `SELECT` was needed to retrieve the row after insert. PostgreSQL's `RETURNING` eliminates that round trip — one query instead of two.
-
-### `%s` placeholders
+### Strategy 3: `RecursiveChunker`
 
 ```python
-cur.execute("SELECT * FROM scores WHERE id = %s", (score_id,))
+DEFAULT_SEPARATORS = ["\n\n", "\n", ". ", "! ", "? ", " ", ""]
 ```
 
-psycopg2 uses `%s` for all parameter types (integers, strings, floats). SQLite uses `?`. This is a driver-level difference — both prevent SQL injection by parameterizing the query.
+**The recursive algorithm:**
+```
+If text fits in chunk_size → return it
+Otherwise:
+    Try splitting on separators[0]  (paragraph break)
+    For each piece:
+        If piece fits → keep it
+        If piece is still too big → recurse with separators[1:]
+```
 
-Note the tuple with a trailing comma: `(score_id,)`. A single-element tuple in Python requires the comma — `(score_id)` is just parentheses around an integer, not a tuple.
+This guarantees that no chunk ever exceeds `chunk_size`, while always trying to split on the most natural boundary available.
+
+**Why the separator order matters:**
+`\n\n` (blank line between paragraphs) is the most semantically meaningful boundary. A chunk that contains a complete paragraph is more coherent than one that cuts mid-paragraph. So we try it first. Only if a single paragraph exceeds `chunk_size` do we fall back to splitting on newlines, then sentences, then words, then characters.
+
+**Why `""` as the last separator?**
+An empty string split gives individual characters. It's the absolute last resort — used only if a single word exceeds `chunk_size`. In practice this never happens for normal text, but it makes the algorithm complete — it will always produce chunks within the size limit.
+
+**The `_merge_splits` pass:**
+After recursion, many small splits exist. `_merge_splits` combines them back together up to `chunk_size`, with overlap:
+```
+["The", "quick", "brown", "fox"] + chunk_size=20 →
+["The quick brown fox"]
+```
+Without this pass, you'd get many single-word chunks. The recursive split breaks things apart; the merge pass reassembles them into reasonably sized chunks.
 
 ---
 
-## `Makefile`
+### Strategy 4: `TokenChunker`
+
+```python
+def _get_encoder(self):
+    if self._enc is None:
+        import tiktoken
+        self._enc = tiktoken.get_encoding(self.model)
+    return self._enc
+```
+
+**Why lazy initialization (`self._enc = None` then load on first use)?**
+The tiktoken encoder takes ~100ms to load. If you create a `TokenChunker` object but don't call `.chunk()`, you shouldn't pay that cost. Lazy initialization defers the load until it's actually needed. It also means the other three strategies work with zero dependencies even in the same file that defines `TokenChunker`.
+
+**Why token-based instead of character-based?**
+Character counts are not how LLMs think about text. The word "tokenization" is one token. The word "pneumonoultramicroscopicsilicovolcanoconiosis" is several. A 512-character chunk might be 80 tokens or 200 tokens depending on the vocabulary. When you need to stay within a model's context window, counting tokens is the only accurate approach.
+
+**`cl100k_base` encoding:**
+The default encoding used by GPT-4 and compatible with Claude's tokenizer for estimation purposes. OpenAI's `text-embedding-3-small` also uses this encoding. Using the same encoding as your embedding model ensures your chunk sizes accurately reflect what the model will process.
+
+---
+
+### The factory function
+
+```python
+STRATEGIES = {
+    "fixed":     FixedSizeChunker,
+    "sentence":  SentenceChunker,
+    "recursive": RecursiveChunker,
+    "token":     TokenChunker,
+}
+
+def get_chunker(strategy, chunk_size=512, chunk_overlap=50, source=""):
+    if strategy not in STRATEGIES:
+        raise ValueError(...)
+    return STRATEGIES[strategy](chunk_size=chunk_size, ...)
+```
+
+**Why a factory instead of direct instantiation?**
+The CLI and any external code that uses this library only need to know strategy names as strings — they don't need to import four different classes. Adding a new strategy is one line in the `STRATEGIES` dict. The CLI's `--strategy` choices list is also derived from this dict, so they stay in sync automatically.
+
+---
+
+## `main.py`
 
 ### What it does
-Provides short memorable commands for common Docker operations.
+CLI entry point. Reads a file, runs the chosen chunking strategy, prints a summary, and optionally saves JSON output.
 
-```makefile
-up:     docker-compose up --build -d
-down:   docker-compose down
-logs:   docker-compose logs -f api
-shell:  docker-compose exec api bash
-clean:  docker-compose down -v
+### Key decisions
+
+**`read_file()` supports multiple formats**
+The same format-dispatch pattern from Project 1.5 is reused here. PDF and DOCX reading are lazy-imported — no error if the libraries aren't installed unless you actually try to chunk a PDF or DOCX.
+
+**`--compare` mode**
+```python
+for name in ["fixed", "sentence", "recursive"]:
+    chunker = get_chunker(name, chunk_size=chunk_size, ...)
+    result = chunker.chunk(text)
+    sizes = [len(c.text) for c in result.chunks]
+    print(name, result.total_chunks, result.avg_chunk_size, min(sizes), max(sizes))
 ```
+Runs all three stdlib strategies against the same document and prints a comparison table. This is genuinely useful for deciding which strategy to use — you can see at a glance that recursive produces more uniform chunk sizes than fixed, or that sentence produces fewer but larger chunks.
 
-**Why a Makefile?**
-`docker-compose up --build -d` is 26 characters with 3 flags to remember. `make up` is 7. Makefiles are available on every Unix system without installation. They're the standard tool for project shortcuts in backend engineering.
+**`print_chunks()` preview**
+Shows the first 80 characters of each chunk with its position and token estimate. Makes it easy to visually inspect whether chunks are coherent without opening a JSON file.
 
-**`make clean` vs `make down`**
-`make down` stops containers but keeps the database volume — data survives. `make clean` runs `docker-compose down -v` which also removes volumes — data is wiped. Always use `down` in development; only use `clean` when you want a completely fresh state.
+**`--output` saves full JSON**
+The JSON output from `result.to_dict()` contains every field of every chunk — index, text, start/end offsets, token estimate, source. This is the format that Project 7 (Embedding Service) will consume — each chunk becomes an embedding request.
 
 ---
 
-## `tests/test_api.py` — SQLite mock for psycopg2
+## `tests/test_chunker.py`
 
-### The challenge
-Tests shouldn't need Docker running. But the app uses psycopg2 which connects to PostgreSQL. The solution: wrap SQLite in classes that mimic the psycopg2 interface.
+### What it does
+Tests all four strategies, the data structures, error cases, and the factory function — 25 tests total.
 
-### `SQLiteCursor` — the translation layer
+### Key decisions
 
+**Test the contract, not the implementation**
+`test_chunk_size_respected` checks that no chunk exceeds the size limit — it doesn't check exact chunk text. `test_covers_all_content` checks that important words appear somewhere in the output — it doesn't check which chunk they're in. This makes tests robust to refactoring.
+
+**`test_overlap_creates_overlap`**
 ```python
-class SQLiteCursor:
-    def execute(self, sql, params=None):
-        sql = sql.replace("%s", "?")          # placeholder style
-        sql = sql.replace("JSONB", "TEXT")     # type compatibility
-        sql = sql.replace("SERIAL PRIMARY KEY", "INTEGER PRIMARY KEY AUTOINCREMENT")
-        sql = sql.replace("TIMESTAMPTZ", "TEXT")
-        sql = sql.replace("NOW()", "datetime('now')")
-        # Handle RETURNING * — not supported in SQLite
-        returning = "RETURNING *" in sql
-        sql = sql.replace("RETURNING *", "")
-        ...
-        if returning:
-            self._cur.execute("SELECT * FROM scores WHERE id = ?", (self._cur.lastrowid,))
+c = FixedSizeChunker(chunk_size=100, chunk_overlap=20)
+result = c.chunk("a" * 200)
+assert result.chunks[1].start_char < 100
+```
+Verifies that the second chunk starts before the end of the first — proving overlap is working. Uses a uniform string (`"a" * 200`) so character positions are predictable.
+
+**`test_unknown_strategy_raises` and `test_overlap_gte_size_raises`**
+Tests for error cases. A chunker with overlap ≥ size would loop forever or produce nonsense. The factory rejecting unknown strategy names surfaces typos immediately. Both tests verify that errors are caught early with clear messages rather than producing silently wrong output.
+
+---
+
+## `requirements.txt`
+
+```
+pdfplumber>=0.10.0    # optional — PDF reading
+python-docx>=1.0.0   # optional — DOCX reading
+tiktoken>=0.6.0      # optional — TokenChunker
+pytest>=7.0          # optional — running tests
 ```
 
-Key translations:
-- `%s` → `?` (placeholder style)
-- `SERIAL` → `INTEGER PRIMARY KEY AUTOINCREMENT` (sequence syntax)
-- `JSONB` → `TEXT` (type compatibility)
-- `RETURNING *` → simulated with a second SELECT using `lastrowid`
-- JSONB fields auto-deserialized from JSON strings on `fetchone()`/`fetchall()`
-
-### `SQLiteConnection` — context manager compliance
-
-```python
-class SQLiteConnection:
-    def __enter__(self): return self
-    def __exit__(self, *args): pass
-    def commit(self): self._conn.commit()
-    def cursor(self): return SQLiteCursor(self._conn)
-```
-
-psycopg2 connections are used as context managers in the app (`with get_connection() as conn`). The wrapper implements `__enter__` and `__exit__` so the `with` statement works. `commit()` is forwarded to the underlying sqlite3 connection.
-
-### Patching before import
-
-```python
-import database
-database.get_connection = mock_get_connection  # patch first
-from main import app                            # then import
-```
-
-`main.py` imports `database` at module level. If `main` was imported first, it would capture the original `get_connection`. Patching the module attribute before importing `main` ensures the app uses the mock throughout.
+Zero required dependencies. The three most useful strategies (`fixed`, `sentence`, `recursive`) use only the Python stdlib. This means the library works out of the box in any Python 3.11+ environment — no pip install before you can start chunking.
