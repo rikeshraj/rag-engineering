@@ -1,0 +1,14 @@
+# No required dependencies — fixed, sentence, and recursive
+# strategies work with pure Python stdlib.
+
+# Optional — for PDF support
+pdfplumber>=0.10.0
+
+# Optional — for DOCX support
+python-docx>=1.0.0
+
+# Optional — for token-based chunking
+tiktoken>=0.6.0
+
+# Optional — for running tests
+pytest>=7.0
