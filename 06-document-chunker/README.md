@@ -129,13 +129,6 @@ json.dumps(result.to_dict(), indent=2)
 | Lazy import | tiktoken imported only when `TokenChunker` is used |
 | `@property` | `Chunk.token_estimate`, `ChunkResult.total_chunks` |
 
-## Running Tests (Optional)
-
-```bash
-pip install pytest
-pytest tests/ -v
-```
-
 ## What's next
 
 Project 7 (Embedding Service) takes the chunks produced here and converts each one into a vector embedding using OpenAI or HuggingFace — the next step in the RAG pipeline.
