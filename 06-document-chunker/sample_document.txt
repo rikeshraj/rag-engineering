@@ -1,0 +1,39 @@
+Introduction to Retrieval-Augmented Generation
+
+Retrieval-Augmented Generation (RAG) is an AI framework that enhances large language models by allowing them to access external knowledge before generating a response. Instead of relying solely on information encoded in model weights during training, RAG systems retrieve relevant documents from a knowledge base and use them as context for generation.
+
+How RAG Works
+
+The RAG pipeline consists of two main phases. The first phase is indexing, where documents are split into chunks, converted into vector embeddings, and stored in a vector database. The second phase is retrieval and generation, where a user query is embedded and used to search the vector database for the most relevant chunks, which are then passed to the language model as context.
+
+Document chunking is one of the most critical steps in building a RAG system. The way you split documents directly affects retrieval quality. Chunks that are too small may lack enough context. Chunks that are too large may dilute the relevant information and exceed model context limits. The goal is to create chunks that are semantically coherent and independently meaningful.
+
+Chunking Strategies
+
+Fixed-size chunking splits text into windows of a fixed character or token count with some overlap between adjacent chunks. This is the simplest approach and works well as a baseline. However, it can split sentences or paragraphs mid-way, reducing coherence.
+
+Sentence-aware chunking respects natural sentence boundaries. It accumulates sentences until reaching the chunk size limit, then starts a new chunk with some sentence overlap. This produces more semantically coherent chunks at the cost of variable chunk sizes.
+
+Recursive chunking tries a priority list of separators — paragraphs first, then newlines, then sentences, then words, then individual characters. It recursively splits text until all pieces fit within the target chunk size. This is the most flexible strategy and handles mixed content well. It is the approach used by LangChain's RecursiveCharacterTextSplitter.
+
+Token-based chunking counts tokens instead of characters. Since language models process text in tokens, this approach more accurately controls how much text fits within a context window. It requires a tokenizer library such as tiktoken.
+
+Vector Embeddings
+
+Once documents are chunked, each chunk is converted into a vector embedding — a list of floating-point numbers that represent the semantic meaning of the text. Similar chunks produce similar vectors. This allows retrieval by semantic similarity rather than exact keyword matching.
+
+Common embedding models include OpenAI's text-embedding-3-small, which produces 1536-dimensional vectors, and open-source alternatives from HuggingFace such as sentence-transformers. The choice of embedding model affects both retrieval quality and cost.
+
+Retrieval
+
+Given a user query, the RAG system embeds the query using the same model used to embed the documents. It then searches the vector database for the k most similar chunks using cosine similarity or dot product distance. These chunks become the context provided to the language model.
+
+Hybrid search combines vector similarity with keyword-based search such as BM25. This captures both semantic similarity and exact keyword matches, which neither approach handles well alone. Reciprocal Rank Fusion is a common technique for merging the two ranked result sets.
+
+Generation
+
+The retrieved chunks are inserted into a prompt template alongside the user query. The language model generates a response grounded in the retrieved context rather than relying on parametric memory alone. This reduces hallucination and allows the model to answer questions about information it was never trained on.
+
+Evaluation
+
+Evaluating a RAG system requires measuring multiple dimensions. Retrieval quality measures whether the right chunks were retrieved. Faithfulness measures whether the generated answer is supported by the retrieved context. Answer relevance measures whether the answer actually addresses the user query. RAGAS is a popular open-source framework for automated RAG evaluation.
