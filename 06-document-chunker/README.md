@@ -21,7 +21,7 @@ Every RAG system starts here. How you split documents directly affects retrieval
 ## Setup
 
 ```bash
-git clone https://github.com/yourname/rag-engineering
+git clone https://github.com/rikeshraj/rag-engineering
 cd rag-engineering/06-document-chunker
 
 # No required dependencies for fixed/sentence/recursive strategies
