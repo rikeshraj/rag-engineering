@@ -25,8 +25,8 @@ A progressive series of projects building toward a production-ready RAG (Retriev
 |---|---------|----------|--------|
 | 06 | [Document Chunker](./06-document-chunker) | Fixed, Sentence, Recursive & Token chunking strategies | ✅ Complete |
 | 07 | [Embedding Service](./07-embedding-service) | OpenAI embeddings, Async batch, Caching, Cosine similarity | ✅ Complete |
-| 08 | [Vector Store API](./08-vector-store-api) | pgvector, HNSW index, Cosine search, Collections | ✅ Complete |
-| 09 | [BM25 Search Engine](./09-bm25-search-engine) | Inverted index, TF-IDF, BM25 formula, Stemming, Stopwords | ✅ Complete |
+| 08 | [Vector Store API](./08-vector-store-api) | pgvector, HNSW index, Cosine search, Collections | 🔄 In Progress |
+| 09 | [BM25 Search Engine](./09-bm25-search-engine) | Inverted index, TF-IDF, BM25 formula, Stemming, Stopwords | 🔜 Coming Soon |
 
 ---
 
@@ -34,9 +34,9 @@ A progressive series of projects building toward a production-ready RAG (Retriev
 
 | # | Project | Concepts | Status |
 |---|---------|----------|--------|
-| 10 | [LLM Gateway](./10-llm-gateway) | Anthropic SDK, Streaming SSE, Retry + backoff, Token tracking | ✅ Complete |
-| 11 | [Prompt Engineering Toolkit](./11-prompt-toolkit) | Jinja2 templates, Few-shot, Chain-of-thought, HyDE, Chains | ✅ Complete |
-| 12 | [Structured Output Extractor](./12-structured-extractor) | JSON extraction, Retry on failure, Type coercion, Confidence scoring | ✅ Complete |
+| 10 | [LLM Gateway](./10-llm-gateway) | Anthropic SDK, Streaming SSE, Retry + backoff, Token tracking | 🔜 Coming Soon |
+| 11 | [Prompt Engineering Toolkit](./11-prompt-toolkit) | Jinja2 templates, Few-shot, Chain-of-thought, HyDE, Chains | 🔜 Coming Soon |
+| 12 | [Structured Output Extractor](./12-structured-extractor) | JSON extraction, Retry on failure, Type coercion, Confidence scoring | 🔜 Coming Soon |
 
 ---
 
@@ -44,8 +44,8 @@ A progressive series of projects building toward a production-ready RAG (Retriev
 
 | # | Project | Concepts | Status |
 |---|---------|----------|--------|
-| 13 | [Basic RAG Pipeline](./13-rag-pipeline) | Ingest → Embed → Store → Retrieve → Generate, Citations | ✅ Complete |
-| 14 | [Hybrid Search RAG](./14-hybrid-rag) | BM25 + Vector search, Reciprocal Rank Fusion, Reranking | 🔄 In Progress |
+| 13 | [Basic RAG Pipeline](./13-rag-pipeline) | Ingest → Embed → Store → Retrieve → Generate, Citations | 🔜 Coming Soon |
+| 14 | [Hybrid Search RAG](./14-hybrid-rag) | BM25 + Vector search, Reciprocal Rank Fusion, Reranking | 🔜 Coming Soon |
 | 15 | [RAG Evaluation Framework](./15-rag-evaluation) | Faithfulness, Relevance, RAGAS metrics, Benchmarking | 🔜 Coming Soon |
 
 ---
@@ -103,7 +103,6 @@ Each project lives in its own folder with:
 - `EXPLANATION.md` — file-by-file breakdown of every decision made
 - Self-contained code — no cross-project dependencies
 - `requirements.txt` for dependencies
-- `tests/` folder (optional, clearly separated)
 
 Navigate into any project folder and follow its README:
 
@@ -134,12 +133,12 @@ uvicorn main:app --reload
 | Phase | Projects | Complete | In Progress | Coming Soon |
 |---|---|---|---|---|
 | Phase 0 — Foundations | 6 | 6 | 0 | 0 |
-| Phase 1 — Data & Search | 4 | 4 | 0 | 0 |
-| Phase 2 — LLM Integration | 3 | 3 | 0 | 0 |
-| Phase 3 — RAG Core | 3 | 1 | 1 | 1 |
+| Phase 1 — Data & Search | 4 | 2 | 1 | 1 |
+| Phase 2 — LLM Integration | 3 | 0 | 0 | 3 |
+| Phase 3 — RAG Core | 3 | 0 | 0 | 3 |
 | Phase 4 — Production RAG | 5 | 0 | 0 | 5 |
 | Phase 5 — Applications | 7 | 0 | 0 | 7 |
-| **Total** | **28** | **14** | **1** | **13** |
+| **Total** | **28** | **18** | **1** | **19** |
 
 ---
 
