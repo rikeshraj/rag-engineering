@@ -7,7 +7,7 @@ Routes:
     POST   /documents/batch         → index many documents
     GET    /documents/{id}          → get document by ID
     DELETE /documents/{id}          → remove document from index
-    POST   /search                  → BM25 keyword search
+    POST   /search                  → BM25 keyword search 
     GET    /stats                   → index statistics
     POST   /index/save              → persist index to disk
     POST   /index/load              → restore index from disk
