@@ -6,10 +6,7 @@ The core data structure behind every search engine.
 A forward index maps:    document_id → list of terms
 An inverted index maps:  term        → list of document_ids
 
-The inverted index is what makes full-text search fast.
-Instead of scanning every document for a query term,
-we look up the term and immediately get the list of
-documents that contain it.
+The inverted index is what makes full-text search fast. Instead of scanning every document for a query term, we look up the term and immediately get the list of documents that contain it.
 
 Structure:
     {
