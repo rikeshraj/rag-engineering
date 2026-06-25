@@ -6,7 +6,7 @@ from fastapi.security import APIKeyHeader
 
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
 
-
+ 
 def verify_api_key(api_key: str = Security(API_KEY_HEADER)) -> str:
     expected = os.getenv("API_KEY")
     if not expected:
