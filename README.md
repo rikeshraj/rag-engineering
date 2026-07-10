@@ -5,7 +5,7 @@ A progressive series of projects building toward a production-ready RAG (Retriev
 ---
 
 ## Projects
- 
+  
 ### Phase 0 — Foundations
 
 | # | Project | Concepts | Status |
