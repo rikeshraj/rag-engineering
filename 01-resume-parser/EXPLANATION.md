@@ -12,9 +12,7 @@ A complete explanation of every file in the project, what it does, why it was bu
 ├── parser.py           # Core parsing logic
 ├── sample_resume.txt   # Sample resume for testing
 ├── requirements.txt
-├── README.md
-└── tests/
-    └── tests.py
+└── README.md
 ```
 
 ---
@@ -105,31 +103,9 @@ Tries `utf-8` first, then falls back to `latin-1`. Real-world files often use di
 
 ---
 
-## `tests/tests.py`
-
-### What it does
-Verifies the parser works correctly across contact extraction, skills, experience, education, and edge cases.
-
-### Key decisions
-
-**Test classes group by feature**
-`TestContactExtraction`, `TestSkillsParsing`, `TestExperienceParsing` etc. group related assertions together. This makes it easy to run just one category: `pytest tests/ -k TestSkillsParsing`.
-
-**Edge case tests**
-`test_empty_string` and `test_no_sections` verify the parser doesn't crash on bad input — it returns an empty `Resume` object instead. This is important for a tool that will encounter malformed real-world files.
-
-**`to_dict()` structure test**
-Tests that the output dict has all expected keys. This catches regressions where a field is accidentally removed from `Resume` or `to_dict()`.
-
----
-
 ## `requirements.txt`
 
-```
-pytest>=7.0
-```
-
-Only one dependency — `pytest` for testing. The entire parser uses Python stdlib only: `re`, `json`, `argparse`, `pathlib`, `dataclasses`. No external libraries means:
+The entire parser uses Python stdlib only: `re`, `json`, `argparse`, `pathlib`, `dataclasses`. No external libraries means:
 - No `pip install` needed to run the parser
 - No version conflicts
 - No security surface from third-party packages
