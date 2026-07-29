@@ -13,9 +13,7 @@ A complete explanation of every file in the project, what it does, why it was bu
 ├── formatter.py           # Terminal report formatting
 ├── sample_employees.csv   # Sample data for testing
 ├── requirements.txt
-├── README.md
-└── tests/
-    └── test_analyzer.py
+└── README.md
 ```
 
 ### How the files connect
@@ -189,29 +187,6 @@ except (ValueError, FileNotFoundError) as e:
 
 **JSON output is always the full report**
 The `--output` flag always saves the complete report regardless of `--section`. If you display only skills but save to file, the file contains everything. This is the most useful behaviour — the file is for later analysis, the terminal is for quick inspection.
-
----
-
-## `tests/test_analyzer.py`
-
-### What it does
-Tests stat helpers, type detection, column analysis, correlation, and error handling using a small in-memory CSV created with `tmp_path`.
-
-### Key decisions
-
-**`scope="module"` fixture**
-```python
-@pytest.fixture(scope="module")
-def test_db(tmp_path_factory):
-    ...
-```
-The test CSV is created once and shared across all tests in the module. Without `scope="module"`, pytest would recreate it before every test — wasteful for a fixture that never changes.
-
-**Testing stat helpers in isolation**
-`TestStatHelpers` tests `_mean`, `_median`, `_std`, `_correlation` directly with known inputs and expected outputs. This makes it immediately obvious if a math bug is introduced, without having to parse a whole CSV to find it.
-
-**`tmp_path` for test files**
-pytest's built-in `tmp_path` fixture provides a temporary directory that's automatically cleaned up after the test session. No manual cleanup needed, no leftover test files.
 
 ---
 
