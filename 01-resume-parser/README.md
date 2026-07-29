@@ -28,12 +28,6 @@ python main.py sample_resume.txt --section experience
 python main.py sample_resume.txt --format json
 ```
 
-## Run Tests
-
-```bash
-python -m pytest tests.py -v
-```
-
 ## Project Structure
 
 ```
