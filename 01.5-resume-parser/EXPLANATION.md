@@ -14,9 +14,7 @@ A complete explanation of every file in the project, what changed from v1, and t
 ├── sample_resume.txt   # Plain text sample
 ├── sample_resume.md    # Markdown sample (new)
 ├── requirements.txt    # Updated with pdfplumber + python-docx
-├── README.md
-└── tests/
-    └── tests.py
+└── README.md
 ```
 
 ### How the files connect
