@@ -13,9 +13,7 @@ A complete explanation of every file in the project, what it does, why it was bu
 ├── seed.py          # Fake data generator
 ├── queries.py       # All SQL analytics queries
 ├── requirements.txt
-├── README.md
-└── tests/
-    └── test_db.py
+└── README.md
 ```
 
 ### How the files connect
@@ -243,21 +241,3 @@ A dict maps CLI names to `(function, description)` tuples. Benefits:
 
 **`print_table()` — dynamic column widths**
 Column widths are calculated by scanning all rows for the longest value in each column. This ensures the table stays aligned regardless of data length — no hardcoded widths that break with long values.
-
----
-
-## `tests/test_db.py`
-
-### What it does
-Tests schema creation, seeding correctness, and all 11 queries using a temporary database seeded with 50 employees.
-
-### Key decisions
-
-**`scope="module"` — seed once, test everything**
-The test DB is seeded once at module load with 50 employees. All test classes share it. Reseeding before every test would be slow and unnecessary since no test modifies the DB.
-
-**`tmp_path_factory` for the test DB**
-pytest's `tmp_path_factory` creates a temporary directory outside the project folder. The test DB file is created there and automatically deleted after the test session. No cleanup code needed.
-
-**Testing query contract, not implementation**
-`test_top3_earners` checks that `dept_salary_rank <= 3` for all results — it doesn't check exact salary values. This tests the contract (top 3 returned) not the implementation (specific numbers). Contract tests survive data changes; value tests don't.
